@@ -27,7 +27,6 @@ async def send_mail(recipient):
         body=f"Your verification code is: {otp}. It will expire in 10 minutes.",
         subtype=MessageType.plain
     )
-
     await fm.send_message(message)
 
     return otp

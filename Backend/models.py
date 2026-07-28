@@ -1,11 +1,13 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, EmailStr
 
-class AdminUsers(BaseModel):
+class UsernameCheck(BaseModel):
+    username: EmailStr = Field(..., max_length=40)
 
-    username: str = Field(..., pattern=r'^.+@.+$', max_length=40)
+class Users(UsernameCheck):
     password: str = Field(..., min_length=8)
 
-class VerifyOtp(BaseModel):
+class ForgetPassword(UsernameCheck):
+    pass
 
-    username: str = Field(..., pattern=r'^.+@.+$', max_length=40)
+class VerifyOtp(UsernameCheck):
     otp: str = Field(..., max_length=6)

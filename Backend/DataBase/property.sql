@@ -16,7 +16,7 @@ CREATE OR REPLACE PROCEDURE p_add_prop(
     p_prop_unit IN INT,
     p_prop_image IN TEXT,
     p_prop_built IN INT,
-    p_prop_id IN INT
+    p_prop_id OUT INT
 )
 LANGUAGE plpgsql
 AS $$
@@ -29,16 +29,52 @@ BEGIN
 END;
 $$;
 
+CREATE OR REPLACE PROCEDURE p_get_props(
+    p_cursor INOUT refcursor
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    OPEN p_cursor FOR
+    SELECT
+        P.PROP_ID,
+        P.PROP_NAME,
+        P.PROP_STATUS,
+        P.PROP_LOC,
+        P.PROP_UNIT,
+        P.PROP_BUILT,
+        P.PROP_IMAGE,
+        COALESCE((COUNT(T.TENANT_ID)::DECIMAL / NULLIF(P.PROP_UNIT, 0)) * 100, 0) AS occupancy_rate,
+        COALESCE(SUM(T.RENT_AMOUNT), 0) AS monthly_revenue
+    FROM PROPERTIES P
+    LEFT JOIN TENANTS T ON P.PROP_ID = T.PROP_ID AND T.STATUS = 'Active'
+    GROUP BY
+        P.PROP_ID,
+        P.PROP_NAME,
+        P.PROP_STATUS,
+        P.PROP_LOC,
+        P.PROP_UNIT,
+        P.PROP_BUILT,
+        P.PROP_IMAGE;
+END;
+$$;
+
 CREATE OR REPLACE PROCEDURE p_update_prop_status(
-    p_prop_name IN VARCHAR,
-    p_prop_status IN VARCHAR
+    p_prop_id IN INT,
+    p_prop_status OUT VARCHAR
 )
 LANGUAGE plpgsql
 AS $$
 BEGIN
     UPDATE properties
-    SET PROP_STATUS = p_prop_status
-    WHERE PROP_NAME = p_prop_name;
+    SET prop_status = CASE
+    WHEN prop_status = 'Active' THEN 'Inactive'
+    WHEN prop_status = 'Inactive' THEN 'Active'
+    ELSE prop_status
+    END
+    WHERE prop_id = p_prop_id
+
+    RETURNING prop_status INTO p_prop_status;
 END;
 $$;
 
@@ -47,6 +83,8 @@ CREATE OR REPLACE PROCEDURE p_edit_prop(
     p_prop_name IN VARCHAR,
     p_prop_loc IN VARCHAR,
     p_prop_unit IN INT,
+    p_prop_status IN VARCHAR,
+    p_prop_image IN VARCHAR,
     p_prop_built IN INT
 )
 LANGUAGE plpgsql
@@ -56,9 +94,11 @@ BEGIN
     SET PROP_NAME = p_prop_name,
         PROP_LOC = p_prop_loc,
         PROP_UNIT = p_prop_unit,
+        PROP_STATUS = p_prop_status,
+        PROP_IMAGE = p_prop_image,
         PROP_BUILT = p_prop_built
     WHERE PROP_ID = p_prop_id;
 END;
 $$;
 
-select * from properties;
+drop procedure p_update_prop_status(p_prop_id integer)

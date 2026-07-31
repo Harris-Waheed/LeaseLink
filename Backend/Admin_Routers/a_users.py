@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends, status
-from models import Users, VerifyOtp, ForgetPassword
+from models.authentication import Users, VerifyOtp, ForgetPassword
 from security import hash_pass, verify_pass
 from datetime import datetime, timedelta
 from database import get_db

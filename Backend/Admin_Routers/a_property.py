@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends, status
-from models import NewProperty, GetProperty, EditProperty, UpdatePropStatus
+from models.property import NewProperty, GetProperty, EditProperty, UpdatePropStatus
 from database import get_db
 from typing import List
 import cloudinary.uploader
@@ -27,7 +27,7 @@ async def add_property(new: NewProperty = Depends(), db: asyncpg.Connection = De
                              image_url, new.prop_built)
 
             return {'status': 'success',
-                    'data': prop_id,
+                    'data': new.model_dump(),
                     'message': 'New Property Created!'}
 
     except Exception as e:

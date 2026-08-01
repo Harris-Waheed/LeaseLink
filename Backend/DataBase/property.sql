@@ -85,7 +85,8 @@ CREATE OR REPLACE PROCEDURE p_edit_prop(
     p_prop_unit IN INT,
     p_prop_status IN VARCHAR,
     p_prop_image IN VARCHAR,
-    p_prop_built IN INT
+    p_prop_built IN INT,
+    r_prop_image OUT VARCHAR
 )
 LANGUAGE plpgsql
 AS $$
@@ -95,10 +96,11 @@ BEGIN
         PROP_LOC = p_prop_loc,
         PROP_UNIT = p_prop_unit,
         PROP_STATUS = p_prop_status,
-        PROP_IMAGE = p_prop_image,
+        PROP_IMAGE = COALESCE(p_prop_image::VARCHAR, prop_image),
         PROP_BUILT = p_prop_built
-    WHERE PROP_ID = p_prop_id;
+    WHERE PROP_ID = p_prop_id
+
+    RETURNING prop_image INTO p_prop_image;
 END;
 $$;
 
-drop procedure p_update_prop_status(p_prop_id integer)

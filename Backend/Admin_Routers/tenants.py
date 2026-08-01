@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends, status
-from models.tenant import NewTenant, GetTenant, EditTenant
+from models.tnt_model import NewTenant, EditTenant
 from database import get_db
 import cloudinary.uploader
 import asyncpg
@@ -128,7 +128,7 @@ async def edit_tenant(
 
     try:
         async with db.transaction():
-            image = await db.execute(
+            image = await db.fetchval(
                 edit_query,
                 tnt_id,
                 edit_data.tnt_name,

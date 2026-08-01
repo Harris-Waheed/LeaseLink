@@ -43,19 +43,29 @@ BEGIN
         P.PROP_LOC,
         P.PROP_UNIT,
         P.PROP_BUILT,
-        P.PROP_IMAGE,
-        COALESCE((COUNT(T.TENANT_ID)::DECIMAL / NULLIF(P.PROP_UNIT, 0)) * 100, 0) AS occupancy_rate,
-        COALESCE(SUM(T.RENT_AMOUNT), 0) AS monthly_revenue
+        P.PROP_IMAGE
+    FROM PROPERTIES P;
+END;
+$$;
+
+CREATE OR REPLACE PROCEDURE p_get_prop_stats(
+    p_prop_id IN INT,
+    p_occupancy_rate OUT DECIMAL,
+    p_monthly_revenue OUT DECIMAL
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    SELECT
+        COALESCE((COUNT(L.TENANT_ID)::DECIMAL / NULLIF(MAX(P.PROP_UNIT), 0)) * 100, 0),
+        COALESCE(SUM(L.RENT_AMOUNT), 0)
+    INTO
+        p_occupancy_rate,
+        p_monthly_revenue
     FROM PROPERTIES P
-    LEFT JOIN TENANTS T ON P.PROP_ID = T.PROP_ID AND T.STATUS = 'Active'
-    GROUP BY
-        P.PROP_ID,
-        P.PROP_NAME,
-        P.PROP_STATUS,
-        P.PROP_LOC,
-        P.PROP_UNIT,
-        P.PROP_BUILT,
-        P.PROP_IMAGE;
+    LEFT JOIN LEASES L
+        ON P.PROP_ID = L.PROP_ID AND L.LEASE_STATUS = 'Active'
+    WHERE P.PROP_ID = p_prop_id;
 END;
 $$;
 
@@ -104,3 +114,4 @@ BEGIN
 END;
 $$;
 
+drop procedure p_get_props(p_cursor refcursor)

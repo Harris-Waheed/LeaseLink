@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException, Depends, status
-from models.property import NewProperty, GetProperty, EditProperty
+from models.prop_model import NewProperty, GetProperty, EditProperty
 from database import get_db
-from typing import List
 import cloudinary.uploader
+from typing import List
 import asyncpg
 
 router = APIRouter(prefix="/prop", tags=["ADMIN PROPERTY"])
@@ -68,7 +68,7 @@ async def get_prop(db: asyncpg.Connection = Depends(get_db)):
         async with db.transaction():
 
             await db.execute(get_data, "prop_curs")
-            rows = await db.fetch("FETCH ALL FROM prop_curs")
+            rows = await db.fetch('FETCH ALL FROM "prop_curs"')
 
             for row in rows:
 
@@ -80,8 +80,6 @@ async def get_prop(db: asyncpg.Connection = Depends(get_db)):
                     "prop_unit": row["prop_unit"],
                     "prop_built": row["prop_built"],
                     "prop_image": row["prop_image"],
-                    "occupancy_rate": row["occupancy_rate"],
-                    "monthly_revenue": row["monthly_revenue"],
                 }
 
                 prop_list.append(data)
@@ -90,6 +88,31 @@ async def get_prop(db: asyncpg.Connection = Depends(get_db)):
     except Exception as e:
         print(e)
         raise HTTPException(status_code=500, detail="Property Fetch Failed!")
+
+
+@router.get("/prop_stats/{prop_id}", status_code=status.HTTP_200_OK)
+async def get_prop_stats(prop_id: int, db: asyncpg.Connection = Depends(get_db)):
+
+    query = "CALL p_get_prop_stats($1, NULL, NULL)"
+
+    try:
+        row = await db.fetchrow(query, prop_id)
+
+        return {
+            "status": "success",
+            "data": {
+                "prop_id": prop_id,
+                "occupancy_rate": row["p_occupancy_rate"],
+                "monthly_revenue": row["p_monthly_revenue"],
+            },
+        }
+
+    except Exception as e:
+        print(f"Database error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to fetch property stats",
+        )
 
 
 @router.put("/edit_prop/{prop_id}")
@@ -114,7 +137,7 @@ async def edit_prop(
     try:
         async with db.transaction():
 
-            image = await db.execute(
+            image = await db.fetchval(
                 edit_property,
                 prop_id,
                 prop.prop_name,

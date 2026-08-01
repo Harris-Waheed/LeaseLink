@@ -1,22 +1,43 @@
-from pydantic import BaseModel, Field, EmailStr, HttpUrl
-from decimal import Decimal
+from pydantic import BaseModel, Field, EmailStr
+from fastapi import File, UploadFile, Form
 from datetime import date
 
-class EditTenant(BaseModel):
-    tnt_name: str = Field(..., max_length=50)
-    tnt_email: EmailStr = Field(...)
-    tnt_number: str = Field(..., max_length=20)
-    tnt_national_id: str = Field(..., max_length=50)
-    rent_amount: Decimal = Field(..., gt=0, max_digits=10, decimal_places=2)
+class NewTenant:
+    def __init__(
+        self,
+        tnt_name: str = Form(..., max_length=50),
+        tnt_email: EmailStr = Form(...),
+        tnt_number: str = Form(..., max_length=20),
+        tnt_national_id: str = Form(..., max_length=50),
+        tenant_image: UploadFile = File(...)
+    ):
+        self.tnt_name = tnt_name
+        self.tnt_email = tnt_email
+        self.tnt_number = tnt_number
+        self.tnt_national_id = tnt_national_id
+        self.tenant_image = tenant_image
 
+class EditTenant:
+    def __init__(
+        self,
+        tnt_name: str = Form(..., max_length=50),
+        tnt_email: EmailStr = Form(...),
+        tnt_number: str = Form(..., max_length=20),
+        tnt_national_id: str = Form(..., max_length=50),
+        tenant_image: UploadFile | None = File(default=None)
+    ):
+        self.tnt_name = tnt_name
+        self.tnt_email = tnt_email
+        self.tnt_number = tnt_number
+        self.tnt_national_id = tnt_national_id
+        self.tenant_image = tenant_image
 
-class NewTenant(EditTenant):
-    tnt_unit_assign: str = Field(...)
-    prop_id: int = Field(...)
-    lease_start: date = Field()
-    lease_end: date = Field()
-
-class GetTenant(NewTenant):
+class GetTenant(BaseModel):
     tnt_id: int = Field(...)
+    tnt_name: str = Field(...)
+    tnt_email: EmailStr = Field(...)
+    tnt_number: str = Field(...)
+    tnt_national_id: str = Field(...)
+    tenant_image: str | None = Field(...)
+    status: str = Field(...)
     joined_at: date = Field(...)
-    prop_name: str = Field(...)

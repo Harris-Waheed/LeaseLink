@@ -23,7 +23,9 @@ async def signup(user: Users, db: asyncpg.Connection = Depends(get_db)):
             user_status = await db.fetchval(verify_query, user.username)
 
             if user_status is True:
-                raise HTTPException(status_code=409, detail="User Already Exists!")
+                raise HTTPException(
+                    status_code=409, detail="Email already exists!".capitalize()
+                )
 
             if user_status is None:
                 await db.execute(add_new_user, user.username, hashed_pass)
@@ -67,7 +69,7 @@ async def verify_otp(new_otp: VerifyOtp, db: asyncpg.Connection = Depends(get_db
             exp_time_obj = datetime.strptime(exp_time_str, "%Y-%m-%d %H:%M:%S")
 
             if exp_time_obj > datetime.now():
-                if str(otp_data[0]) == str(new_otp.otp):
+                if str(otp_data[0]).strip() == str(new_otp.otp).strip():
                     await db.execute(updt_status, new_otp.username)
 
                     return {
@@ -156,7 +158,7 @@ async def forget_password(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.put("/change_password")
+@router.post("/change_password")
 async def change_password(user: Users, db: asyncpg.Connection = Depends(get_db)):
 
     change_pass = "CALL p_update_pass($1, $2)"

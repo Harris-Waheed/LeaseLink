@@ -133,7 +133,3 @@ AS $$
         WHERE username = p_username;
 end;
 $$;
-
-drop procedure p_get_otp(p_username VARCHAR, p_otp INTEGER, p_exp_time VARCHAR);
-
-select * from OTP_VERIFY;

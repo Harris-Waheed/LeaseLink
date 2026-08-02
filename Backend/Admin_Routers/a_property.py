@@ -58,7 +58,7 @@ async def add_property(
         )
 
 
-@router.get("/", response_model=List[GetProperty])
+@router.get("/get_prop", response_model=List[GetProperty])
 async def get_prop(db: asyncpg.Connection = Depends(get_db)):
 
     prop_list = []

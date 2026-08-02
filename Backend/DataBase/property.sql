@@ -1,8 +1,8 @@
 CREATE TABLE properties(
 
     prop_id SERIAL primary key ,
-    prop_name VARCHAR(50) NOT NULL UNIQUE ,
-    prop_loc VARCHAR(100) NOT NULL ,
+    prop_name VARCHAR(100) NOT NULL UNIQUE ,
+    prop_loc TEXT NOT NULL ,
     prop_unit INT NOT NULL ,
     prop_status VARCHAR(30) DEFAULT 'Active' CHECK (prop_status IN ('Active', 'Inactive')) NOT NULL ,
     prop_image TEXT,
@@ -110,8 +110,6 @@ BEGIN
         PROP_BUILT = p_prop_built
     WHERE PROP_ID = p_prop_id
 
-    RETURNING prop_image INTO p_prop_image;
+    RETURNING prop_image INTO r_prop_image;
 END;
 $$;
-
-drop procedure p_get_props(p_cursor refcursor)

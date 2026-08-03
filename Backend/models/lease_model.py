@@ -13,7 +13,7 @@ class NewLease:
         lease_start: date = Form(...),
         lease_end: date = Form(...),
         rent_amount: Decimal = Form(...),
-        lease_doc: UploadFile | None = File(default=None),
+        lease_doc: UploadFile = File(default=None),
     ):
         self.tenant_id = tenant_id
         self.prop_id = prop_id
@@ -28,13 +28,15 @@ class GetLease(BaseModel):
     lease_id: int
     tenant_id: int
     tenant_name: str
+    national_id: str
+    tenant_image: str
     prop_id: int
     prop_name: str
     unit_assign: str
     lease_start: date
     lease_end: date
     rent_amount: Decimal
-    lease_doc_url: str | None
+    lease_doc_url: str
     lease_status: str
     created_at: date
 
@@ -46,7 +48,7 @@ class EditLease:
         lease_start: date = Form(...),
         lease_end: date = Form(...),
         rent_amount: Decimal = Form(...),
-        lease_doc: UploadFile | None = File(default=None),
+        lease_doc: UploadFile = File(...),
     ):
         self.unit_assign = unit_assign
         self.lease_start = lease_start

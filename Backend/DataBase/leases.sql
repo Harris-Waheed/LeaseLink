@@ -26,14 +26,14 @@ LANGUAGE plpgsql
 AS $$
 BEGIN
     INSERT INTO LEASES (
-        tenant_id, prop_id, unit_assign, lease_start,
-        lease_end, rent_amount, lease_doc_url
+        TENANT_ID, PROP_ID, UNIT_ASSIGN, LEASE_START,
+        LEASE_END, RENT_AMOUNT, LEASE_DOC_URL
     )
-    VALUES (p_tenant_id, p_prop_id, p_unit_assign,
-        p_lease_start, p_lease_end, p_rent_amount,
-        p_lease_doc_url
+    VALUES (P_TENANT_ID, P_PROP_ID, P_UNIT_ASSIGN,
+        P_LEASE_START, P_LEASE_END, P_RENT_AMOUNT,
+        P_LEASE_DOC_URL
     )
-    RETURNING lease_id, created_at INTO p_lease_id, p_created_at;
+    RETURNING LEASE_ID, CREATED_AT INTO P_LEASE_ID, P_CREATED_AT;
 END;
 $$;
 
@@ -46,6 +46,7 @@ BEGIN
     OPEN p_lease_cursor FOR
     SELECT
         l.lease_id, l.tenant_id, t.full_name AS tenant_name,
+        t.national_id, t.tenant_image,
         l.prop_id, p.prop_name, l.unit_assign,
         l.lease_start, l.lease_end, l.rent_amount,
         l.lease_doc_url, l.lease_status, l.created_at
@@ -62,7 +63,8 @@ CREATE OR REPLACE PROCEDURE p_edit_lease(
     p_lease_start IN DATE,
     p_lease_end IN DATE,
     p_rent_amount IN DECIMAL,
-    p_lease_doc_url IN VARCHAR
+    p_lease_doc_url IN VARCHAR,
+    r_lease_doc_url OUT VARCHAR
 )
 LANGUAGE plpgsql
 AS $$
@@ -74,21 +76,29 @@ BEGIN
         lease_end = p_lease_end,
         rent_amount = p_rent_amount,
         lease_doc_url = COALESCE(p_lease_doc_url::VARCHAR, LEASES.lease_doc_url)
-    WHERE lease_id = p_lease_id;
+    WHERE lease_id = p_lease_id
+
+    RETURNING lease_doc_url INTO r_lease_doc_url;
 END;
 $$;
 
-CREATE OR REPLACE PROCEDURE p_change_lease_status(
+CREATE OR REPLACE PROCEDURE p_update_lease_status(
     p_lease_id IN INT,
-    p_new_status IN VARCHAR
+    p_lease_status OUT VARCHAR
 )
 LANGUAGE plpgsql
 AS $$
 BEGIN
-
     UPDATE LEASES
-    SET lease_status = p_new_status
-    WHERE lease_id = p_lease_id;
+    SET lease_status = CASE
+    WHEN leases.lease_status = 'Active' THEN 'Terminated'
+    WHEN leases.lease_status = 'Terminated' THEN 'Active'
+    ELSE lease_status
+    END
+    WHERE leases.lease_id = p_lease_id
+
+    RETURNING lease_status INTO p_lease_status;
 END;
 $$;
 
+select * from LEASES;

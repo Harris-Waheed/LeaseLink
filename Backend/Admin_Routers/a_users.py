@@ -158,7 +158,7 @@ async def forget_password(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/change_password")
+@router.put("/change_password")
 async def change_password(user: Users, db: asyncpg.Connection = Depends(get_db)):
 
     change_pass = "CALL p_update_pass($1, $2)"

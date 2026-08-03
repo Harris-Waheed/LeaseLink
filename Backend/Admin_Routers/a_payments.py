@@ -1,24 +1,44 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from database import get_db
 from models.pay_model import NewPayment
+from database import get_db
+import cloudinary.uploader
 import asyncpg
 
 router = APIRouter(prefix="/pay", tags=["ADMIN PAYMENT"])
 
 
 @router.post("/log_payment", status_code=status.HTTP_201_CREATED)
-async def log_payment(payment: NewPayment, db: asyncpg.Connection = Depends(get_db)):
+async def log_payment(
+    payment: NewPayment = Depends(), db: asyncpg.Connection = Depends(get_db)
+):
+
+    if not payment.reference_image.content_type.startswith("image/"):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid file type: {payment.reference_image.content_type}. Only images are allowed.",
+        )
+
+    upload_result = cloudinary.uploader.upload(payment.reference_image.file)
+    image_url = upload_result.get("secure_url")
+
     insert_query = "CALL p_log_payment($1, $2, $3)"
 
     try:
         async with db.transaction():
-            await db.execute(
-                insert_query, payment.tenant_id, payment.amount, payment.reference
-            )
+            await db.execute(insert_query, payment.tenant_id, payment.amount, image_url)
+
+            response_data = {
+                "tenant_id",
+                payment.tenant_id,
+                "amount",
+                payment.amount,
+                "reference_image",
+                image_url,
+            }
 
             return {
                 "status": "success",
-                "data": payment.model_dump(),
+                "data": response_data,
                 "message": "Payment logged successfully!",
             }
 
@@ -39,15 +59,16 @@ async def get_all_payments(db: asyncpg.Connection = Depends(get_db)):
         async with db.transaction():
 
             await db.execute(query, "payment_cursor")
-            records = await db.fetch('FETCH ALL FROM "payments_cursor"')
+            records = await db.fetch('FETCH ALL FROM "payment_cursor"')
 
             payment_list = []
             for record in records:
                 payment_data = {
                     "date": record["payment_date"],
                     "tenant_name": record["tenant_name"],
+                    "tenant_email": record["tenant_email"],
                     "amount": record["amount"],
-                    "reference": record["reference"],
+                    "reference_image": record["reference_image"],
                     "status": record["status"],
                 }
                 payment_list.append(payment_data)

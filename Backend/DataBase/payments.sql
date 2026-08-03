@@ -2,7 +2,7 @@ CREATE TABLE PAYMENTS (
     payment_id SERIAL PRIMARY KEY,
     tenant_id INT NOT NULL,
     amount DECIMAL NOT NULL,
-    reference VARCHAR(255),
+    reference_image varchar,
     payment_date DATE NOT NULL DEFAULT CURRENT_DATE,
     status VARCHAR(50) NOT NULL DEFAULT 'Paid'
 );
@@ -15,7 +15,7 @@ CREATE OR REPLACE PROCEDURE p_log_payment(
 LANGUAGE plpgsql
 AS $$
 BEGIN
-    INSERT INTO PAYMENTS (tenant_id, amount, reference, payment_date, status)
+    INSERT INTO PAYMENTS (tenant_id, amount, reference_image, payment_date, status)
     VALUES (p_tenant_id, p_amount, p_reference, CURRENT_DATE, 'Paid');
 END;
 $$;
@@ -30,8 +30,9 @@ BEGIN
     SELECT
         P.payment_date,
         T.full_name AS tenant_name,
+        T.email as tenant_email,
         P.amount,
-        P.reference,
+        P.reference_image,
         P.status
     FROM PAYMENTS P
     JOIN TENANTS T
@@ -49,8 +50,8 @@ AS $$
 BEGIN
     UPDATE PAYMENTS
     SET status = CASE
-    WHEN status = 'Active' THEN 'Inactive'
-    WHEN status = 'Inactive' THEN 'Active'
+    WHEN status = 'Paid' THEN 'Due'
+    WHEN status = 'Due' THEN 'Paid'
     ELSE status
     END
     WHERE payment_id = p_pay_id
@@ -59,3 +60,4 @@ BEGIN
 END;
 $$;
 
+select * from tenants;

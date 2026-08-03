@@ -24,14 +24,20 @@ async def add_tenant(
 
     try:
         async with db.transaction():
-            result = await db.fetchrow(
-                add_query,
-                new.tnt_name,
-                str(new.tnt_email),
-                new.tnt_number,
-                new.tnt_national_id,
-                image_url,
-            )
+
+            try:
+                result = await db.fetchrow(
+                    add_query,
+                    new.tnt_name,
+                    str(new.tnt_email),
+                    new.tnt_number,
+                    new.tnt_national_id,
+                    image_url,
+                )
+            except asyncpg.exceptions.UniqueViolationError:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT, detail="Email Already Exits!"
+                )
 
             response_data = {
                 "tnt_name": new.tnt_name,
@@ -48,6 +54,9 @@ async def add_tenant(
                 "data": response_data,
                 "message": "New Tenant Created!",
             }
+
+    except HTTPException:
+        raise
 
     except Exception as e:
         print(f"Database error: {e}")
@@ -74,6 +83,11 @@ async def get_tenants(db: asyncpg.Connection = Depends(get_db)):
                     "tenant_image": row["tenant_image"],
                     "status": row["status"],
                     "joined_at": row["joined_at"],
+                    "prop_name": row["prop_name"],
+                    "unit_assign": row["unit_assign"],
+                    "lease_start": row["lease_start"],
+                    "lease_end": row["lease_end"],
+                    "rent_amount": row["rent_amount"],
                 }
 
                 tenant_list.append(data)

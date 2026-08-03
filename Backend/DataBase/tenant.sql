@@ -37,9 +37,12 @@ AS $$
 BEGIN
     OPEN p_cursor FOR
     SELECT
-        TENANT_ID, FULL_NAME, EMAIL, PHONE_NUMBER,
-        NATIONAL_ID, TENANT_IMAGE, STATUS, JOINED_AT
-    FROM TENANTS
+        T.TENANT_ID, FULL_NAME, EMAIL, PHONE_NUMBER,
+        NATIONAL_ID, TENANT_IMAGE, STATUS, JOINED_AT, P.PROP_NAME, L.UNIT_ASSIGN,
+        L.LEASE_START, L.LEASE_END, L.RENT_AMOUNT
+    FROM TENANTS T
+    JOIN LEASES L ON L.TENANT_ID = T.TENANT_ID
+    JOIN PROPERTIES P ON P.PROP_ID = L.PROP_ID
     ORDER BY TENANT_ID DESC ;
 END;
 $$;
@@ -93,7 +96,7 @@ BEGIN
         tenant_image = COALESCE(p_tenant_image::VARCHAR, tenant_image)
     WHERE tenant_id = p_tnt_id
 
-    RETURNING p_tenant_image INTO r_tenant_image;
+    RETURNING tenant_image INTO r_tenant_image;
 END;
 $$;
-
+select  *  from TENANTS;

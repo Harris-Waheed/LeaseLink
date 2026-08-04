@@ -19,7 +19,7 @@ async def add_lease(
         )
 
     upload_result = cloudinary.uploader.upload(
-        lease.lease_doc.file, resource_type="raw"
+        lease.lease_doc.file, resource_type="auto"
     )
     doc_url = upload_result.get("secure_url")
 
@@ -118,7 +118,7 @@ async def edit_lease(
         )
 
     upload_result = cloudinary.uploader.upload(
-        lease.lease_doc.file, resource_type="raw"
+        lease.lease_doc.file, resource_type="auto"
     )
     doc_url = upload_result.get("secure_url")
 

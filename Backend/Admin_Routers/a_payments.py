@@ -21,27 +21,32 @@ async def log_payment(
     upload_result = cloudinary.uploader.upload(payment.reference_image.file)
     image_url = upload_result.get("secure_url")
 
-    insert_query = "CALL p_log_payment($1, $2, $3)"
+    insert_query = "CALL p_log_payment($1, $2, $3, NULL)"
 
     try:
         async with db.transaction():
-            await db.execute(insert_query, payment.tenant_id, payment.amount, image_url)
+            result = await db.fetchval(insert_query, payment.tenant_id, payment.amount, image_url)
 
-            response_data = {
-                "tenant_id",
-                payment.tenant_id,
-                "amount",
-                payment.amount,
-                "reference_image",
-                image_url,
-            }
+            if result:
+                response_data = {
+                    "tenant_id": payment.tenant_id,
+                    "amount": payment.amount,
+                    "reference_image": image_url,
+                }
 
-            return {
-                "status": "success",
-                "data": response_data,
-                "message": "Payment logged successfully!",
-            }
+                return {
+                    "status": "success",
+                    "data": response_data,
+                    "message": "Payment logged successfully!",
+                }
 
+            else:
+                raise HTTPException(status_code=status.HTTP_409_CONFLICT,
+                                    detail='Amount not matched with due payment!')
+
+
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"Database error: {e}")
         raise HTTPException(
@@ -101,3 +106,20 @@ async def update_pay_status(pay_id: int, db: asyncpg.Connection = Depends(get_db
     except Exception as e:
         print(e)
         raise HTTPException(status_code=500, detail="Status update failed".capitalize())
+
+
+@router.get("/due_amount/{tenant_id}")
+async def get_due_amount(tenant_id: int, db: asyncpg.Connection = Depends(get_db)):
+    try:
+        due_query = "CALL p_get_due_amount($1, NULL)"
+        due_amount = await db.fetchval(due_query, tenant_id)
+
+        return {
+            "status": "success",
+            "data": {"due_amount": due_amount},
+            "message": "Due amount calculated successfully!"
+        }
+
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=500, detail="Failed to calculate due amount")

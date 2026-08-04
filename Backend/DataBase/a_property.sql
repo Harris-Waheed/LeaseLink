@@ -44,7 +44,8 @@ BEGIN
         P.PROP_UNIT,
         P.PROP_BUILT,
         P.PROP_IMAGE
-    FROM PROPERTIES P;
+    FROM PROPERTIES P
+    ORDER BY prop_id DESC ;
 END;
 $$;
 

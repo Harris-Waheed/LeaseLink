@@ -67,8 +67,8 @@ async def get_prop(db: asyncpg.Connection = Depends(get_db)):
     try:
         async with db.transaction():
 
-            await db.execute(get_data, "prop_curs")
-            rows = await db.fetch('FETCH ALL FROM "prop_curs"')
+            await db.execute(get_data, "props_curs")
+            rows = await db.fetch('FETCH ALL FROM "props_curs"')
 
             for row in rows:
 

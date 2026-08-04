@@ -103,13 +103,15 @@ async def get_tenants(db: asyncpg.Connection = Depends(get_db)):
         raise HTTPException(status_code=500, detail="Unable to fetch tenants.")
 
 
-@router.delete(path="/delete/{tnt_id}")
-async def delete_tenant(tnt_id: int, db: asyncpg.Connection = Depends(get_db)):
+@router.delete(path="/delete/{tnt_mail}")
+async def delete_tenant(tnt_mail: str, db: asyncpg.Connection = Depends(get_db)):
+    del_tenant_account = 'CALL p_delete_tenant_account($1)'
     del_query = "CALL p_del_tenant($1)"
 
     try:
         async with db.transaction():
-            await db.execute(del_query, tnt_id)
+            await db.execute(del_query, tnt_mail)
+            await db.execute(del_tenant_account, tnt_mail)
             return {
                 "status": "successful",
                 "data": None,

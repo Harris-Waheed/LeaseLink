@@ -69,13 +69,13 @@ END;
 $$;
 
 CREATE OR REPLACE PROCEDURE p_del_tenant(
-    p_tnt_id IN INT
+    p_tnt_email IN VARCHAR
 )
 LANGUAGE plpgsql
 AS $$
 BEGIN
     DELETE FROM TENANTS
-    WHERE tenant_id = p_tnt_id;
+    WHERE email = p_tnt_email;
 END;
 $$;
 

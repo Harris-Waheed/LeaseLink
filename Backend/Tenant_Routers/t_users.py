@@ -1,5 +1,7 @@
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi.security import OAuth2PasswordRequestForm
+from security import verify_pass, create_access_token
 from models.t_auth_model import Tenants, VerifyOtp, ForgetPassword
+from fastapi import APIRouter, HTTPException, Depends, status
 from security import hash_pass, verify_pass
 from datetime import datetime, timedelta
 from database import get_db
@@ -98,8 +100,7 @@ async def verify_otp(new_otp: VerifyOtp, db: asyncpg.Connection = Depends(get_db
 
 
 @router.post("/login")
-async def login(user: Tenants, db: asyncpg.Connection = Depends(get_db)):
-
+async def login(user: OAuth2PasswordRequestForm = Depends(), db: asyncpg.Connection = Depends(get_db)):
     try:
         async with db.transaction():
 
@@ -114,7 +115,12 @@ async def login(user: Tenants, db: asyncpg.Connection = Depends(get_db)):
             verified_pass = verify_pass(user.password.strip(), str(hashed_pass).strip())
 
             if verified_pass:
+                token_data = {"sub": user.username}
+                access_token = create_access_token(data=token_data)
+
                 return {
+                    "access_token": access_token,
+                    "token_type": "bearer",
                     "status": "success",
                     "data": user.username,
                     "message": "Successfully Login!",
@@ -128,7 +134,6 @@ async def login(user: Tenants, db: asyncpg.Connection = Depends(get_db)):
     except Exception as e:
         print(e)
         raise HTTPException(status_code=500, detail="Invalid Response!")
-
 
 @router.post("/forget_password")
 async def forget_password(

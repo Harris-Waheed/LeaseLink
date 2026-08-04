@@ -100,5 +100,3 @@ BEGIN
     RETURNING lease_status INTO p_lease_status;
 END;
 $$;
-
-select * from LEASES;

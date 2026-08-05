@@ -78,8 +78,3 @@ BEGIN
     WHERE request_id = p_request_id;
 end;
     $$;
-
-CREATE OR REPLACE PROCEDURE p_get_admin_maintain(
-
-    cursror
-)

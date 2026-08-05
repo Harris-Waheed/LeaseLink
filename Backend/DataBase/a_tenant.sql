@@ -101,4 +101,3 @@ BEGIN
     RETURNING tenant_image INTO r_tenant_image;
 END;
 $$;
-select  *  from TENANTS;

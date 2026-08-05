@@ -6,7 +6,7 @@ LANGUAGE plpgsql
 AS $$
 BEGIN
     OPEN cursor FOR
-    SELECT T.full_name, T.tenant_image, T.joined_at, T.status,
+    SELECT T.full_name, T.tenant_image, T.joined_at, T.status, L.lease_id,
            L.lease_start, L.lease_end, L.lease_status, L.lease_doc_url,
            L.unit_assign, L.rent_amount, L.created_at,
            M.request_id, M.issue_title, M.priority,

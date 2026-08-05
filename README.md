@@ -40,6 +40,37 @@ Whether it is managing multiple properties, automating lease agreements, trackin
 
 <br/>
 
+## Application Gallery
+
+### Administrator Portal
+<div align="center">
+  <img src="docs/assets/Screenshot (1770).png" alt="Admin Login" width="48%" />
+  <img src="docs/assets/Screenshot (1771).png" alt="Admin Dashboard" width="48%" />
+  <br/>
+  <img src="docs/assets/Screenshot (1772).png" alt="Admin Properties" width="48%" />
+  <img src="docs/assets/Screenshot (1773).png" alt="Admin Tenants" width="48%" />
+  <br/>
+  <img src="docs/assets/Screenshot (1774).png" alt="Admin Leases" width="48%" />
+  <img src="docs/assets/Screenshot (1775).png" alt="Admin Payments" width="48%" />
+  <img src="docs/assets/Screenshot (1776).png" alt="Admin Maintenance" width="48%" />
+  <img src="docs/assets/Screenshot (1777).png" alt="Admin Profile" width="48%" />
+</div>
+
+<br/>
+
+### Tenant Portal
+<div align="center">
+  <img src="docs/assets/Screenshot (1778).png" alt="Tenant Login" width="48%" />
+  <img src="docs/assets/Screenshot (1779).png" alt="Tenant Dashboard" width="48%" />
+  <br/>
+  <img src="docs/assets/Screenshot (1780).png" alt="Tenant Payments" width="48%" />
+  <img src="docs/assets/Screenshot (1781).png" alt="Tenant Maintenance" width="48%" />
+  <br/>
+  <img src="docs/assets/Screenshot (1782).png" alt="Tenant Profile" width="48%" />
+</div>
+
+<br/>
+
 ## Technology Stack
 
 ### Frontend Architecture
@@ -53,7 +84,7 @@ Whether it is managing multiple properties, automating lease agreements, trackin
 * **Core Framework:** FastAPI (Python)
 * **Database:** PostgreSQL (with Asyncpg Connection Pooling)
 * **Authentication:** JWT-based Security & Role-Based Access Control (RBAC)
-* **External Services:** Cloudinary (Image Hosting), SMTP (Email Notifications)
+* **External Services:** Cloudinary (Image Hosting), FastAPI-Mail (Email Notifications)
 
 <br/>
 

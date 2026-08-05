@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Outlet, Navigate } from 'react-router-dom';
 import TenantSidebar from '../components/TenantSidebar';
 import Header from '../components/Header';
@@ -5,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 
 export default function TenantLayout() {
   const { user } = useAuth();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   if (!user) {
     return <Navigate to="/tenant" replace />;
@@ -17,9 +19,9 @@ export default function TenantLayout() {
 
   return (
     <div className="h-screen flex overflow-hidden bg-gray-50">
-      <TenantSidebar />
+      <TenantSidebar isMobileMenuOpen={isMobileMenuOpen} setIsMobileMenuOpen={setIsMobileMenuOpen} />
       <div className="flex flex-col w-0 flex-1 overflow-hidden md:pl-64">
-        <Header />
+        <Header onMenuClick={() => setIsMobileMenuOpen(true)} />
         <main className="flex-1 relative z-0 overflow-y-auto focus:outline-none">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-6">
             <Outlet />

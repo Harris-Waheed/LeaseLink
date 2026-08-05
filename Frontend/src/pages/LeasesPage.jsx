@@ -172,6 +172,9 @@ export default function LeasesPage() {
     }
   };
 
+  const openLeaseIndex = visibleLeases.findIndex(l => (l.lease_id || l.id) === activeDropdown);
+  const isDropdownNearBottom = openLeaseIndex !== -1 && openLeaseIndex >= visibleLeases.length - 2;
+
   const tableVariants = {
     hidden: { opacity: 0 },
     show: {
@@ -219,8 +222,8 @@ export default function LeasesPage() {
         </div>
       </div>
 
-      <div className="bg-white shadow-sm rounded-xl border border-gray-200 overflow-visible">
-        <div className="overflow-visible">
+      <div className="bg-white shadow-sm rounded-xl border border-gray-200 overflow-hidden">
+        <div className={`overflow-x-auto min-w-full transition-all duration-200 ${isDropdownNearBottom ? 'pb-40' : ''}`}>
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>

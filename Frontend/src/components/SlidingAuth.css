@@ -317,3 +317,50 @@
   background-color: #e2e8f0 !important;
   transform: translateY(-1px) !important;
 }
+
+/* Mobile Responsiveness */
+.mobile-toggle {
+  display: none;
+  margin-top: 15px;
+  font-size: 0.85rem;
+  color: var(--text-light);
+}
+
+.mobile-toggle button {
+  background: none !important;
+  border: none !important;
+  color: var(--primary) !important;
+  font-weight: 700 !important;
+  padding: 0 5px !important;
+  box-shadow: none !important;
+  cursor: pointer;
+}
+
+.mobile-toggle button:hover {
+  text-decoration: underline;
+  transform: none !important;
+}
+
+@media (max-width: 768px) {
+  .sliding-auth-overlay-container {
+    display: none;
+  }
+  
+  .sliding-auth-sign-in-container,
+  .sliding-auth-sign-up-container {
+    width: 100%;
+  }
+
+  .mobile-toggle {
+    display: block;
+  }
+  
+  .sliding-auth-container {
+    height: 520px;
+  }
+  
+  .sliding-auth-container.right-panel-active .sliding-auth-sign-in-container,
+  .sliding-auth-container.right-panel-active .sliding-auth-sign-up-container {
+    transform: translateX(0);
+  }
+}

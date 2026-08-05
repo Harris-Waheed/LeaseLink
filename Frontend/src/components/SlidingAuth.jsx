@@ -81,6 +81,11 @@ export default function SlidingAuth({ initialMode = 'signin', isLoading = false,
             <button type="submit" disabled={isLoading} className="flex items-center justify-center gap-2">
               {isLoading ? <><Loader2 size={16} className="animate-spin" /> Please wait...</> : 'Sign Up'}
             </button>
+            
+            <div className="mobile-toggle">
+              <span>Already have an account?</span>
+              <button type="button" onClick={() => setIsRightPanelActive(false)}>Sign In</button>
+            </div>
           </form>
         </div>
         <div className="sliding-auth-form-container sliding-auth-sign-in-container">
@@ -107,6 +112,10 @@ export default function SlidingAuth({ initialMode = 'signin', isLoading = false,
               {isLoading ? <><Loader2 size={16} className="animate-spin" /> Please wait...</> : 'Sign In'}
             </button>
             
+            <div className="mobile-toggle">
+              <span>Don't have an account?</span>
+              <button type="button" onClick={() => setIsRightPanelActive(true)}>Sign Up</button>
+            </div>
           </form>
         </div>
         <div className="sliding-auth-overlay-container">

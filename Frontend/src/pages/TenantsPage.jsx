@@ -232,6 +232,9 @@ export default function TenantsPage() {
 
   const visibleTenants = filteredTenants.slice(0, visibleCount);
 
+  const openTenantIndex = visibleTenants.findIndex(t => (t.tnt_id || t.id) === openDropdownId);
+  const isDropdownNearBottom = openTenantIndex !== -1 && openTenantIndex >= visibleTenants.length - 2;
+
   const tableVariants = {
     hidden: { opacity: 0 },
     show: {
@@ -280,8 +283,8 @@ export default function TenantsPage() {
         </div>
       </div>
 
-      <div className="bg-white shadow-sm rounded-xl border border-gray-200 overflow-visible">
-        <div className="overflow-visible">
+      <div className="bg-white shadow-sm rounded-xl border border-gray-200 overflow-hidden">
+        <div className={`overflow-x-auto min-w-full transition-all duration-200 ${isDropdownNearBottom ? 'pb-36' : ''}`}>
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>

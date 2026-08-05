@@ -141,14 +141,7 @@ export default function SlidingAuthPage({ initialMode = 'signin', role = 'admin'
 
       <div className="relative z-10 w-full max-w-4xl flex-1 mx-auto flex flex-col justify-center items-center animate-in fade-in slide-in-from-bottom-4 duration-700 px-4">
         {step === 'auth' ? (
-          <>
-            <SlidingAuth initialMode={initialMode} isLoading={isAuthLoading} onSignIn={handleSignIn} onSignUp={handleSignUp} role={role} />
-            <div className="mt-4 text-center">
-              <Link to={`/forgot-password/${role}`} className="text-sm font-medium text-gray-400 hover:text-white transition-colors">
-                Forgot Password?
-              </Link>
-            </div>
-          </>
+          <SlidingAuth initialMode={initialMode} isLoading={isAuthLoading} onSignIn={handleSignIn} onSignUp={handleSignUp} role={role} />
         ) : (
           <div className="bg-white/90 backdrop-blur-xl py-8 px-6 shadow-2xl sm:rounded-2xl sm:px-12 border border-white/20 w-full max-w-md mx-auto">
             <form className="space-y-6" onSubmit={handleVerifyOtp}>

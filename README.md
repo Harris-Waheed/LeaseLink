@@ -171,6 +171,7 @@ Follow these steps to run LeaseLink locally.
 │   ├── 📁 DataBase/            # Database configurations and connection setup
 │   ├── 📁 Tenant_Routers/      # API endpoints accessible by Tenants
 │   ├── 📁 models/              # Database schema definitions and Pydantic models
+|   ├── 📄 requirements.txt     # Modules required to install
 │   ├── 📄 cloudinary_id.py     # Image upload and hosting utilities
 │   ├── 📄 database.py          # Database connection pooling and session management
 │   ├── 📄 mail.py              # Automated email notification system

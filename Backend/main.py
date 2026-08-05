@@ -1,11 +1,6 @@
-from Admin_Routers import (
-    a_users,
-    a_property,
-    tenants,
-    lease,
-    a_payments,
-    a_maintainance,
-)
+from Admin_Routers import (a_users, a_property, a_tenants, lease, a_payments,
+                            a_maintainance, a_dashboard)
+from Tenant_Routers import t_users, t_tenants
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from database import db_pool
@@ -33,13 +28,18 @@ app.add_middleware(
     allow_methods=["*"],
 )
 
+# Admin Routers
 app.include_router(a_users.router)
 app.include_router(a_property.router)
-app.include_router(tenants.router)
+app.include_router(a_tenants.router)
 app.include_router(lease.router)
 app.include_router(a_payments.router)
 app.include_router(a_maintainance.router)
+app.include_router(a_dashboard.router)
 
+# Tenant Routers
+app.include_router(t_users.router)
+app.include_router(t_tenants.router)
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="localhost", reload=True, port=8000)

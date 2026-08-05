@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends, status
 from models.prop_model import NewProperty, GetProperty, EditProperty
+from cloudinary_id import extract_public_id
 from database import get_db
 import cloudinary.uploader
 from typing import List
@@ -13,14 +14,22 @@ async def add_property(
     new: NewProperty = Depends(), db: asyncpg.Connection = Depends(get_db)
 ):
 
-    if not new.prop_image.content_type.startswith("image/"):
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid file type: {new.prop_image.content_type}. Only images are allowed.",
-        )
+    try:
+        if not new.prop_image.content_type.startswith("image/"):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid file type: {new.prop_image.content_type}. Only images are allowed.",
+            )
 
-    upload_result = cloudinary.uploader.upload(new.prop_image.file)
-    image_url = upload_result.get("secure_url")
+        upload_result = cloudinary.uploader.upload(new.prop_image.file)
+        image_url = upload_result.get("secure_url")
+
+    except HTTPException:
+        raise
+
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=500, detail='Size greater than 10MB')
 
     add_query = "CALL p_add_prop($1, $2, $3, $4, $5, NULL)"
 
@@ -121,18 +130,30 @@ async def edit_prop(
     prop: EditProperty = Depends(),
     db: asyncpg.Connection = Depends(get_db),
 ):
+    old_url = None
     image_url = None
     edit_property = "CALL p_edit_prop($1, $2, $3, $4, $5, $6, $7, NULL)"
+    old_image_url = f"SELECT prop_image FROM PROPERTIES WHERE prop_id = $1"
 
-    if prop.prop_image is not None:
-        if not prop.prop_image.content_type.startswith("image/"):
-            raise HTTPException(
-                status_code=400,
-                detail=f"Invalid file type: {prop.prop_image.content_type}. Only images are allowed.",
-            )
+    try:
+        if prop.prop_image is not None:
+            if not prop.prop_image.content_type.startswith("image/"):
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Invalid file type: {prop.prop_image.content_type}. Only images are allowed.",
+                )
 
-        upload_result = cloudinary.uploader.upload(prop.prop_image.file)
-        image_url = upload_result.get("secure_url")
+            upload_result = cloudinary.uploader.upload(prop.prop_image.file)
+            image_url = upload_result.get("secure_url")
+
+            old_url = await db.fetchval(old_image_url, prop_id)
+
+    except HTTPException:
+        raise
+
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=500, detail='Image size greater than 10MB!')
 
     try:
         async with db.transaction():
@@ -148,20 +169,28 @@ async def edit_prop(
                 prop.prop_built,
             )
 
-            response_data = {
-                "prop_name": prop.prop_name,
-                "prop_loc": prop.prop_loc,
-                "prop_unit": prop.prop_unit,
-                "prop_status": prop.prop_status,
-                "prop_built": prop.prop_built,
-                "prop_image": image,
-            }
+            if image_url and old_url:
+                public_id = extract_public_id(old_url)
+                if public_id:
+                    try:
+                        cloudinary.uploader.destroy(public_id)
+                    except Exception as e:
+                        print(f"Cloudinary cleanup failed for {public_id}: {e}")
 
-            return {
-                "status": "success",
-                "data": response_data,
-                "message": "Data updated successfully!".capitalize(),
-            }
+        response_data = {
+            "prop_name": prop.prop_name,
+            "prop_loc": prop.prop_loc,
+            "prop_unit": prop.prop_unit,
+            "prop_status": prop.prop_status,
+            "prop_built": prop.prop_built,
+            "prop_image": image,
+        }
+
+        return {
+            "status": "success",
+            "data": response_data,
+            "message": "Data updated successfully!".capitalize(),
+        }
 
     except Exception as e:
         print(e)

@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from models.lease_model import NewLease, EditLease
+from cloudinary_id import extract_public_id
 from database import get_db
 import cloudinary.uploader
 import asyncpg
@@ -12,16 +13,24 @@ async def add_lease(
     lease: NewLease = Depends(), db: asyncpg.Connection = Depends(get_db)
 ):
 
-    if lease.lease_doc.content_type != "application/pdf":
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid file type: {lease.lease_doc.content_type}. Only PDFs are allowed.",
-        )
+    try:
+        if lease.lease_doc.content_type != "application/pdf":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid file type: {lease.lease_doc.content_type}. Only PDFs are allowed.",
+            )
 
-    upload_result = cloudinary.uploader.upload(
-        lease.lease_doc.file, resource_type="auto"
-    )
-    doc_url = upload_result.get("secure_url")
+        upload_result = cloudinary.uploader.upload(
+            lease.lease_doc.file, resource_type="auto"
+        )
+        doc_url = upload_result.get("secure_url")
+
+    except HTTPException:
+        raise
+
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=500, detail='Size greater than 10MB')
 
     add_query = "CALL p_add_lease($1, $2, $3, $4, $5, $6, $7, NULL, NULL)"
 
@@ -109,18 +118,30 @@ async def edit_lease(
     lease: EditLease = Depends(),
     db: asyncpg.Connection = Depends(get_db),
 ):
+
+    old_url = None
+    old_pdf_url = f"SELECT lease_doc_url FROM LEASES WHERE lease_id = $1"
     edit_query = "CALL p_edit_lease($1, $2, $3, $4, $5, $6, NULL)"
 
-    if lease.lease_doc.content_type != "application/pdf":
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid file type: {lease.lease_doc.content_type}. Only PDFs are allowed.",
-        )
+    try:
+        if lease.lease_doc.content_type != "application/pdf":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid file type: {lease.lease_doc.content_type}. Only PDFs are allowed.",
+            )
 
-    upload_result = cloudinary.uploader.upload(
-        lease.lease_doc.file, resource_type="auto"
-    )
-    doc_url = upload_result.get("secure_url")
+        upload_result = cloudinary.uploader.upload(
+            lease.lease_doc.file, resource_type="auto"
+        )
+        doc_url = upload_result.get("secure_url")
+        old_url = await db.fetchval(old_pdf_url, lease_id)
+
+    except HTTPException:
+        raise
+
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=500, detail='Size is greater than 10MB')
 
     try:
         async with db.transaction():
@@ -134,20 +155,28 @@ async def edit_lease(
                 doc_url,
             )
 
-            response_data = {
-                "lease_id": lease_id,
-                "unit_assign": lease.unit_assign,
-                "lease_start": lease.lease_start,
-                "lease_end": lease.lease_end,
-                "rent_amount": lease.rent_amount,
-                "lease_doc": lease_doc,
-            }
+            if doc_url and old_url:
+                public_id = extract_public_id(old_url)
+                if public_id:
+                    try:
+                        cloudinary.uploader.destroy(public_id)
+                    except Exception as e:
+                        print(f"Cloudinary cleanup failed for {public_id}: {e}")
 
-            return {
-                "status": "success",
-                "data": response_data,
-                "message": "Lease updated successfully!",
-            }
+        response_data = {
+            "lease_id": lease_id,
+            "unit_assign": lease.unit_assign,
+            "lease_start": lease.lease_start,
+            "lease_end": lease.lease_end,
+            "rent_amount": lease.rent_amount,
+            "lease_doc": lease_doc,
+        }
+
+        return {
+            "status": "success",
+            "data": response_data,
+            "message": "Lease updated successfully!",
+        }
 
     except Exception as e:
         print(f"Database error: {e}")

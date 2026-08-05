@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends, status
 from models.tnt_model import NewTenant, EditTenant
+from cloudinary_id import extract_public_id
 from database import get_db
 import cloudinary.uploader
 import asyncpg
@@ -13,14 +14,22 @@ async def add_tenant(
 ):
     add_query = "CALL p_add_tenant($1, $2, $3, $4, $5, NULL, NULL)"
 
-    if not new.tenant_image.content_type.startswith("image/"):
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid file type: {new.tenant_image.content_type}. Only images are allowed.",
-        )
+    try:
+        if not new.tenant_image.content_type.startswith("image/"):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid file type: {new.tenant_image.content_type}. Only images are allowed.",
+            )
 
-    upload_result = cloudinary.uploader.upload(new.tenant_image.file)
-    image_url = upload_result.get("secure_url")
+        upload_result = cloudinary.uploader.upload(new.tenant_image.file)
+        image_url = upload_result.get("secure_url")
+
+    except HTTPException:
+        raise
+
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=500, detail='Size greater than 10MB')
 
     try:
         async with db.transaction():
@@ -129,18 +138,30 @@ async def edit_tenant(
     edit_data: EditTenant = Depends(),
     db: asyncpg.Connection = Depends(get_db),
 ):
+
+    old_url = None
     image_url = None
+    old_image_url = f"SELECT tenant_image FROM TENANTS WHERE tenant_id = $1"
     edit_query = "CALL p_edit_tenant($1, $2, $3, $4, $5, $6, NULL)"
 
-    if edit_data.tenant_image is not None:
-        if not edit_data.tenant_image.content_type.startswith("image/"):
-            raise HTTPException(
-                status_code=400,
-                detail=f"Invalid file type: {edit_data.tenant_image.content_type}. Only images are allowed.",
-            )
+    try:
+        if edit_data.tenant_image is not None:
+            if not edit_data.tenant_image.content_type.startswith("image/"):
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Invalid file type: {edit_data.tenant_image.content_type}. Only images are allowed.",
+                )
 
-        upload_result = cloudinary.uploader.upload(edit_data.tenant_image.file)
-        image_url = upload_result.get("secure_url")
+            upload_result = cloudinary.uploader.upload(edit_data.tenant_image.file)
+            image_url = upload_result.get("secure_url")
+            old_url = await db.fetchval(old_image_url, tnt_id)
+
+    except HTTPException:
+        raise
+
+    except Exception as e:
+        raise HTTPException(status_code=400, detail='Image size greater than 10MB!')
+
 
     try:
         async with db.transaction():
@@ -154,19 +175,27 @@ async def edit_tenant(
                 image_url,
             )
 
-            response_data = {
-                "tnt_name": edit_data.tnt_name,
-                "tnt_email": edit_data.tnt_email,
-                "tnt_number": edit_data.tnt_number,
-                "tnt_national_id": edit_data.tnt_national_id,
-                "tenant_image": image,
-            }
+            if image_url and old_url:
+                public_id = extract_public_id(old_url)
+                if public_id:
+                    try:
+                        cloudinary.uploader.destroy(public_id)
+                    except Exception as e:
+                        print(f"Cloudinary cleanup failed for {public_id}: {e}")
 
-            return {
-                "status": "successful",
-                "data": response_data,
-                "message": "Updated Successfully!",
-            }
+        response_data = {
+            "tnt_name": edit_data.tnt_name,
+            "tnt_email": edit_data.tnt_email,
+            "tnt_number": edit_data.tnt_number,
+            "tnt_national_id": edit_data.tnt_national_id,
+            "tenant_image": image,
+        }
+
+        return {
+            "status": "successful",
+            "data": response_data,
+            "message": "Updated Successfully!",
+        }
 
     except Exception as e:
         print(f"Database error: {e}")
